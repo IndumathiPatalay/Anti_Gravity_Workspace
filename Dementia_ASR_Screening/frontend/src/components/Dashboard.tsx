@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
   Activity, Plus, LogOut, Clock, Mic, FileText, 
-  Settings, Award, Heart, CheckCircle2, AlertTriangle, ShieldCheck 
+  Settings, ShieldCheck 
 } from 'lucide-react';
 
 interface Session {

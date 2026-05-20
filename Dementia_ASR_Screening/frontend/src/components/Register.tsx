@@ -36,12 +36,7 @@ const Register: React.FC = () => {
     }
   }, [weight, height]);
 
-  // PHQ-2 depression screening calculated check
-  const getPhqCombinedScore = () => {
-    const p1 = parseInt(phq1) || 0;
-    const p2 = parseInt(phq2) || 0;
-    return p1 + p2;
-  };
+
 
   const getBmiCategoryText = (val: number) => {
     if (val < 18.5) return 'Underweight (High Dementia Risk)';

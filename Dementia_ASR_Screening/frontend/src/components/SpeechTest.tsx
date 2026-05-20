@@ -32,7 +32,7 @@ const themeImages: Record<string, string> = {
   'daily-life':       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800',
   'abstract':         'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=800',
   'family-memories':  'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&q=80&w=800',
-  'hobbies-leisure':  'https://images.unsplash.com/photo-1447078806655-409295609816?auto=format&fit=crop&q=80&w=800',
+  'hobbies-leisure':  'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=800',
   'travel-adventure': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800',
 };
 

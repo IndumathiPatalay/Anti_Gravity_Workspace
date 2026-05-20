@@ -31,7 +31,7 @@ const AnalysisReport: React.FC = () => {
     );
   }
 
-  const { transcript, fillersCount, fillerInstances, estimatedPauses, pauseInstances, duration } = data;
+  const { transcript, fillersCount, fillerInstances, estimatedPauses, pauseInstances } = data;
 
   // ── Multi-Factorial Risk Stratification Algorithm (Wiley 2025) ───────────────────
   
@@ -297,8 +297,8 @@ const AnalysisReport: React.FC = () => {
             <Heart size={18} color="var(--accent-success)" style={{ marginBottom: '0.5rem' }} />
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>BMI Status</div>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0.25rem 0' }}>{bmi}</div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: bmi >= 25 ? 'var(--accent-success)' : bmi < 18.5 ? 'var(--accent-danger)' : 'var(--text-primary)' }}>
-              {bmi >= 25 ? 'Protective Factor' : bmi < 18.5 ? 'Elevated Risk' : 'Normal Weight'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: bmiRiskColor }}>
+              {bmiRiskText}
             </span>
           </div>
 
