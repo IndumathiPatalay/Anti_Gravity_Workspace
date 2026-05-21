@@ -100,7 +100,7 @@ function encodeWAV(samples: Float32Array, sampleRate: number): Blob {
 
 function floatTo16BitPCM(output: DataView, offset: number, input: Float32Array) {
   for (let i = 0; i < input.length; i++, offset += 2) {
-    let s = Math.max(-1, Math.min(1, input[i]));
+    const s = Math.max(-1, Math.min(1, input[i]));
     output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
   }
 }
@@ -141,7 +141,7 @@ const SpeechTest: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
       audioContextRef.current = audioContext;
 
       const source = audioContext.createMediaStreamSource(stream);
@@ -313,11 +313,12 @@ const SpeechTest: React.FC = () => {
           },
         });
 
-      } catch (err: any) {
-        console.error('[Analysis error]', err);
+      } catch (err) {
+        const errorVal = err as { response?: { data?: { error?: string } }; message?: string };
+        console.error('[Analysis error]', errorVal);
         const msg =
-          err.response?.data?.error ||
-          err.message ||
+          errorVal.response?.data?.error ||
+          errorVal.message ||
           'Unknown error. Please try again.';
         setError(`Analysis failed: ${msg}`);
         setIsAnalyzing(false);

@@ -47,7 +47,7 @@ const AnalysisReport: React.FC = () => {
   
   // Age factor
   const age = user?.age || 0;
-  let ageRiskText = 'Low Risk';
+  let ageRiskText: string;
   let ageRiskColor = 'var(--accent-success)';
   if (age >= 75) {
     clinicalScore += 35;
@@ -70,7 +70,7 @@ const AnalysisReport: React.FC = () => {
   const phq2 = user?.phq2 || 0;
   const phqTotal = phq1 + phq2;
   const isDepressed = phqTotal >= 3;
-  let moodRiskText = 'Low Risk';
+  let moodRiskText: string;
   let moodRiskColor = 'var(--accent-success)';
   if (isDepressed) {
     clinicalScore += 25;
@@ -82,7 +82,7 @@ const AnalysisReport: React.FC = () => {
 
   // Education level factor
   const edu = user?.educationLevel || 'College/University Degree';
-  let eduRiskText = 'Moderate Risk';
+  let eduRiskText: string;
   let eduRiskColor = 'var(--accent-warning)';
   if (edu === 'High School or Less') {
     clinicalScore += 25;
@@ -99,8 +99,8 @@ const AnalysisReport: React.FC = () => {
 
   // BMI factor (Protective if Overweight/Obese: BMI >= 25, Risk if BMI < 18.5)
   const bmi = user?.bmi || 22.0;
-  let bmiRiskText = 'Normal';
-  let bmiRiskColor = 'var(--text-secondary)';
+  let bmiRiskText: string;
+  let bmiRiskColor: string;
   if (bmi < 18.5) {
     clinicalScore += 15;
     bmiRiskText = `Underweight (Elevated Risk, BMI: ${bmi})`;

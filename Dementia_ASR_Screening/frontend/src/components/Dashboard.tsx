@@ -15,8 +15,8 @@ interface Session {
   fillersCount: number;
   estimatedPauses: number;
   duration: number;
-  fillerInstances: any[];
-  pauseInstances: any[];
+  fillerInstances: unknown[];
+  pauseInstances: unknown[];
   compositeScore?: number;
 }
 
@@ -37,7 +37,6 @@ const Dashboard: React.FC = () => {
   const [educationLevel, setEducationLevel] = useState(user?.educationLevel || 'College/University Degree');
   const [weight, setWeight] = useState(user?.weight?.toString() || '');
   const [height, setHeight] = useState(user?.height?.toString() || '');
-  const [bmi, setBmi] = useState<number | null>(user?.bmi || null);
   const [phq1, setPhq1] = useState(user?.phq1?.toString() || '0');
   const [phq2, setPhq2] = useState(user?.phq2?.toString() || '0');
   
@@ -45,37 +44,29 @@ const Dashboard: React.FC = () => {
   const [profileError, setProfileError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
 
-  // Dynamic real-time BMI calculator
-  useEffect(() => {
-    const w = parseFloat(weight);
-    const h = parseFloat(height);
-    if (w > 0 && h > 0) {
-      const calculatedBmi = w / Math.pow(h / 100, 2);
-      setBmi(Math.round(calculatedBmi * 10) / 10);
-    } else {
-      setBmi(null);
-    }
-  }, [weight, height]);
-
-  // Fetch History Log
-  const fetchHistory = async () => {
-    if (!user) return;
-    setHistoryLoading(true);
-    try {
-      const res = await axios.get(`http://localhost:5000/api/sessions/${user.id}`);
-      setSessions(res.data);
-    } catch (error) {
-      console.error('Failed to fetch history', error);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
+  // Dynamic real-time BMI calculator computed on render
+  const wVal = parseFloat(weight);
+  const hVal = parseFloat(height);
+  const bmi = (wVal > 0 && hVal > 0) ? Math.round((wVal / Math.pow(hVal / 100, 2)) * 10) / 10 : null;
 
   useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      setHistoryLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:5000/api/sessions/${user.id}`);
+        setSessions(res.data);
+      } catch (error) {
+        console.error('Failed to fetch history', error);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
     if (activeTab === 'history') {
       fetchHistory();
     }
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   const handleLogout = () => {
     logout();
@@ -129,8 +120,9 @@ const Dashboard: React.FC = () => {
       login(res.data.user, token!);
       setProfileSuccess('Clinical profile updated successfully!');
       setTimeout(() => setProfileSuccess(''), 4000);
-    } catch (err: any) {
-      setProfileError(err.response?.data?.error || 'Failed to update profile');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setProfileError(axiosError.response?.data?.error || 'Failed to update profile');
     } finally {
       setProfileSaving(false);
     }

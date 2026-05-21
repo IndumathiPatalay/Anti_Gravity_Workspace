@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlus, Info } from 'lucide-react';
@@ -13,7 +13,6 @@ const Register: React.FC = () => {
   const [educationLevel, setEducationLevel] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
-  const [bmi, setBmi] = useState<number | null>(null);
 
   // PHQ-2 Depressive Symptoms screening questions
   const [phq1, setPhq1] = useState('');
@@ -24,19 +23,10 @@ const Register: React.FC = () => {
   
   const navigate = useNavigate();
 
-  // Dynamic real-time BMI calculation
-  useEffect(() => {
-    const w = parseFloat(weight);
-    const h = parseFloat(height);
-    if (w > 0 && h > 0) {
-      const calculatedBmi = w / Math.pow(h / 100, 2);
-      setBmi(Math.round(calculatedBmi * 10) / 10);
-    } else {
-      setBmi(null);
-    }
-  }, [weight, height]);
-
-
+  // Dynamic real-time BMI calculation computed on render
+  const w = parseFloat(weight);
+  const h = parseFloat(height);
+  const bmi = (w > 0 && h > 0) ? Math.round((w / Math.pow(h / 100, 2)) * 10) / 10 : null;
 
   const getBmiCategoryText = (val: number) => {
     if (val < 18.5) return 'Underweight (High Dementia Risk)';
@@ -63,8 +53,9 @@ const Register: React.FC = () => {
         bmi: bmi || null
       });
       navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to register');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to register');
     } finally {
       setLoading(false);
     }

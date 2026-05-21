@@ -22,8 +22,9 @@ const Login: React.FC = () => {
       const res = await axios.post('http://localhost:5000/api/auth/login', { userId, password });
       login(res.data.user, res.data.token);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to login');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || 'Failed to login');
     } finally {
       setLoading(false);
     }
