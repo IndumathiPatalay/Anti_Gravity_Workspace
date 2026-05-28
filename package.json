@@ -1,0 +1,11 @@
+{
+  "name": "anti-gravity-workspace",
+  "private": true,
+  "workspaces": [
+    "Dementia_ASR_Screening/frontend",
+    "Dementia_ASR_Screening/backend"
+  ],
+  "scripts": {
+    "build": "npm run build --prefix Dementia_ASR_Screening/frontend"
+  }
+}
