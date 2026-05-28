@@ -23,8 +23,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, Square, AlertCircle, Loader, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import API_URL from '../api';
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = API_URL;
 
 // ── Theme Data ─────────────────────────────────────────────────────────────────
 const themeImages: Record<string, string> = {

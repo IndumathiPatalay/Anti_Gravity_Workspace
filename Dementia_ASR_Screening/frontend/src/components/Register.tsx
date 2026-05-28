@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlus, Info } from 'lucide-react';
+import API_URL from '../api';
 
 const Register: React.FC = () => {
   const [userId, setUserId] = useState('');
@@ -40,7 +41,7 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { 
+      await axios.post(`${API_URL}/api/auth/register`, { 
         userId, 
         password, 
         age: parseInt(age), 

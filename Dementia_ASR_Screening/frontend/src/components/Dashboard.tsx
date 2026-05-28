@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../api';
 import { 
   Activity, Plus, LogOut, Clock, Mic, FileText, 
   Settings, ShieldCheck 
@@ -54,7 +55,7 @@ const Dashboard: React.FC = () => {
       if (!user) return;
       setHistoryLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5000/api/sessions/${user.id}`);
+        const res = await axios.get(`${API_URL}/api/sessions/${user.id}`);
         setSessions(res.data);
       } catch (error) {
         console.error('Failed to fetch history', error);
@@ -76,7 +77,7 @@ const Dashboard: React.FC = () => {
   // Review a specific past session
   const reviewSession = async (sessionId: number) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/sessions/detail/${sessionId}`);
+      const res = await axios.get(`${API_URL}/api/sessions/detail/${sessionId}`);
       const data = res.data;
       navigate('/report', {
         state: {
@@ -104,7 +105,7 @@ const Dashboard: React.FC = () => {
     setProfileSaving(true);
 
     try {
-      const res = await axios.put('http://localhost:5000/api/auth/profile', {
+      const res = await axios.put(`${API_URL}/api/auth/profile`, {
         id: user?.id,
         age: parseInt(age),
         healthStatus,
