@@ -27,7 +27,10 @@ router.post('/register', async (req, res) => {
     ], function(err) {
       if (err) {
         console.error('[DB Register Error]', err);
-        return res.status(400).json({ error: 'User already exists or database error.' });
+        if (err.message && err.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'This User ID is already taken. Please choose a different one or login.' });
+        }
+        return res.status(400).json({ error: 'Registration failed due to database error.' });
       }
       res.status(201).json({ message: 'User registered successfully', id: this.lastID });
     });
