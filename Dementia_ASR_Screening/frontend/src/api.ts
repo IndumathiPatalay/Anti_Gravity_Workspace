@@ -1,7 +1,7 @@
 /**
  * Centralized API base URL.
- * - In local development/LAN testing: dynamically resolves to the accessing machine's IP on port 5000.
- * - In production (Vercel): reads from VITE_API_URL environment variable.
+ * - In development: dynamically resolves to the accessing machine's hostname on port 5000.
+ * - In production: reads from VITE_API_URL environment variable.
  */
 const getApiUrl = (): string => {
   // If explicitly configured in environment, use it
@@ -9,25 +9,14 @@ const getApiUrl = (): string => {
     return import.meta.env.VITE_API_URL as string;
   }
   
-  // Otherwise, dynamically construct based on how the user is accessing the app.
-  // This allows mobile devices on the same Wi-Fi network to connect seamlessly!
-  if (typeof window !== 'undefined' && window.location) {
+  // In development, dynamically target the same host but on port 5000
+  // This allows any mobile or LAN device accessing the dev server to connect seamlessly
+  if (import.meta.env.DEV && typeof window !== 'undefined' && window.location) {
     const { protocol, hostname } = window.location;
-    
-    // If accessed via localhost, loopback, or a standard LAN IP range
-    if (
-      hostname === 'localhost' || 
-      hostname === '127.0.0.1' || 
-      hostname.startsWith('192.168.') || 
-      hostname.startsWith('10.') || 
-      hostname.startsWith('172.') ||
-      hostname.endsWith('.local') // mDNS/Bonjour support
-    ) {
-      return `${protocol}//${hostname}:5000`;
-    }
+    return `${protocol}//${hostname}:5000`;
   }
   
-  // Fallback to localhost if not specified and not matches LAN
+  // Fallback / Production default
   return 'http://localhost:5000';
 };
 
