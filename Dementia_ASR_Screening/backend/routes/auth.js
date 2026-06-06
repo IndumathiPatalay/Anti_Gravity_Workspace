@@ -2,14 +2,18 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
 
 const SECRET_KEY = 'your_secret_key_here'; // In a real app, use environment variables
+const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || '';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Register User
 router.post('/register', async (req, res) => {
   const { userId, password, age, healthStatus, educationLevel, phq1, phq2, weight, height, bmi } = req.body;
-  
+
   // Validation
   if (!userId || !password) {
     return res.status(400).json({ error: 'User ID and password are required' });
@@ -147,6 +151,170 @@ router.put('/profile', (req, res) => {
       });
     });
   });
+});
+
+// OAuth Login/Registration (Google + Mock Developer Mode)
+router.post('/oauth/google', async (req, res) => {
+  const { credential, isMock, mockEmail, mockName, mockSub } = req.body;
+
+  try {
+    let email = '';
+    let name = '';
+    let sub = '';
+
+    if (isMock) {
+      // Mock flow for local dev/testing
+      email = mockEmail || 'mockuser@example.com';
+      name = mockName || 'Mock User';
+      sub = mockSub || `mock_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    } else {
+      // Real Google validation
+      if (!GOOGLE_CLIENT_ID) {
+        return res.status(400).json({ error: 'Google Client ID is not configured on the server. Please use Mock Mode or configure VITE_GOOGLE_CLIENT_ID.' });
+      }
+      
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(400).json({ error: 'Invalid ID Token payload.' });
+      }
+      email = payload.email;
+      name = payload.name || payload.given_name || 'Google User';
+      sub = payload.sub;
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'OAuth login failed: email not provided by authentication provider.' });
+    }
+
+    // Check if user already exists with this oauthProvider & oauthId
+    const sqlSelectOAuth = 'SELECT * FROM users WHERE oauthProvider = ? AND oauthId = ?';
+    db.get(sqlSelectOAuth, ['google', sub], async (err, oauthUser) => {
+      if (err) {
+        console.error('[OAuth DB Error]', err);
+        return res.status(500).json({ error: 'Database query error.' });
+      }
+
+      if (oauthUser) {
+        // User exists - return token
+        const token = jwt.sign({ id: oauthUser.id, userId: oauthUser.userId }, SECRET_KEY, { expiresIn: '2h' });
+        return res.json({
+          token,
+          user: {
+            id: oauthUser.id,
+            userId: oauthUser.userId,
+            age: oauthUser.age,
+            healthStatus: oauthUser.healthStatus,
+            educationLevel: oauthUser.educationLevel,
+            phq1: oauthUser.phq1,
+            phq2: oauthUser.phq2,
+            weight: oauthUser.weight,
+            height: oauthUser.height,
+            bmi: oauthUser.bmi,
+            oauthProvider: oauthUser.oauthProvider,
+            oauthId: oauthUser.oauthId
+          }
+        });
+      }
+
+      // Check if email already exists as standard userId
+      const sqlSelectEmail = 'SELECT * FROM users WHERE userId = ?';
+      db.get(sqlSelectEmail, [email], async (err, existingEmailUser) => {
+        if (err) {
+          console.error('[OAuth DB Error Check Email]', err);
+          return res.status(500).json({ error: 'Database check error.' });
+        }
+
+        if (existingEmailUser) {
+          // Link OAuth to existing account
+          const sqlLinkOAuth = 'UPDATE users SET oauthProvider = ?, oauthId = ? WHERE id = ?';
+          db.run(sqlLinkOAuth, ['google', sub, existingEmailUser.id], function(updateErr) {
+            if (updateErr) {
+              console.error('[OAuth DB Link Error]', updateErr);
+              return res.status(500).json({ error: 'Failed to link OAuth provider to existing user.' });
+            }
+
+            const token = jwt.sign({ id: existingEmailUser.id, userId: existingEmailUser.userId }, SECRET_KEY, { expiresIn: '2h' });
+            return res.json({
+              token,
+              user: {
+                id: existingEmailUser.id,
+                userId: existingEmailUser.userId,
+                age: existingEmailUser.age,
+                healthStatus: existingEmailUser.healthStatus,
+                educationLevel: existingEmailUser.educationLevel,
+                phq1: existingEmailUser.phq1,
+                phq2: existingEmailUser.phq2,
+                weight: existingEmailUser.weight,
+                height: existingEmailUser.height,
+                bmi: existingEmailUser.bmi,
+                oauthProvider: 'google',
+                oauthId: sub
+              }
+            });
+          });
+          return;
+        }
+
+        // Brand new user - create with null clinical parameters (forces complete profile flow)
+        const randomPassword = crypto.randomBytes(32).toString('hex');
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+        const sqlInsert = `INSERT INTO users (
+          userId, password, age, healthStatus, educationLevel, 
+          phq1, phq2, weight, height, bmi, oauthProvider, oauthId
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        db.run(sqlInsert, [
+          email,
+          hashedPassword,
+          null,   // null age forces complete profile flow
+          null,   // null healthStatus forces complete profile flow
+          null,
+          0,
+          0,
+          null,
+          null,
+          null,
+          'google',
+          sub
+        ], function(insertErr) {
+          if (insertErr) {
+            console.error('[OAuth Register Error]', insertErr);
+            return res.status(400).json({ error: 'OAuth registration failed.' });
+          }
+
+          const newUserId = this.lastID;
+          const token = jwt.sign({ id: newUserId, userId: email }, SECRET_KEY, { expiresIn: '2h' });
+          
+          res.status(201).json({
+            token,
+            user: {
+              id: newUserId,
+              userId: email,
+              age: null,
+              healthStatus: null,
+              educationLevel: null,
+              phq1: 0,
+              phq2: 0,
+              weight: null,
+              height: null,
+              bmi: null,
+              oauthProvider: 'google',
+              oauthId: sub
+            }
+          });
+        });
+      });
+    });
+
+  } catch (error) {
+    console.error('[Google OAuth Error]', error);
+    res.status(500).json({ error: 'Google OAuth authentication failed.' });
+  }
 });
 
 module.exports = router;
