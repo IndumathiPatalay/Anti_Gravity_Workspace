@@ -20,7 +20,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
       phq2 INTEGER,
       weight REAL,
       height REAL,
-      bmi REAL
+      bmi REAL,
+      oauthProvider TEXT,
+      oauthId TEXT
     )`);
 
     // Self-healing migration for existing databases
@@ -30,6 +32,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
     db.run(`ALTER TABLE users ADD COLUMN weight REAL`, (err) => {});
     db.run(`ALTER TABLE users ADD COLUMN height REAL`, (err) => {});
     db.run(`ALTER TABLE users ADD COLUMN bmi REAL`, (err) => {});
+    db.run(`ALTER TABLE users ADD COLUMN oauthProvider TEXT`, (err) => {});
+    db.run(`ALTER TABLE users ADD COLUMN oauthId TEXT`, (err) => {});
 
     // Create Sessions table
     db.run(`CREATE TABLE IF NOT EXISTS sessions (

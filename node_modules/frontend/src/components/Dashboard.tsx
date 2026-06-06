@@ -25,8 +25,12 @@ const Dashboard: React.FC = () => {
   const { user, token, login, logout } = useAuth();
   const navigate = useNavigate();
   
+  const isProfileIncomplete = !user?.age || !user?.healthStatus;
+
   // Tab states: 'test' | 'history' | 'profile'
-  const [activeTab, setActiveTab] = useState<'test' | 'history' | 'profile'>('test');
+  const [activeTab, setActiveTab] = useState<'test' | 'history' | 'profile'>(() => {
+    return (!user?.age || !user?.healthStatus) ? 'profile' : 'test';
+  });
   
   // History log state
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -45,10 +49,36 @@ const Dashboard: React.FC = () => {
   const [profileError, setProfileError] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
 
-  // Dynamic real-time BMI calculator computed on render
+  // Sync user values if user context updates (e.g. login completes / updates)
+  useEffect(() => {
+    if (user) {
+      setAge(user.age?.toString() || '');
+      setHealthStatus(user.healthStatus || 'Healthy');
+      setEducationLevel(user.educationLevel || 'College/University Degree');
+      setWeight(user.weight?.toString() || '');
+      setHeight(user.height?.toString() || '');
+      setPhq1(user.phq1?.toString() || '0');
+      setPhq2(user.phq2?.toString() || '0');
+      
+      // Auto switch active tab to profile if profile is incomplete
+      if (!user.age || !user.healthStatus) {
+        setActiveTab('profile');
+      }
+    }
+  }, [user]);
+
+  // Dynamic real-time BMI calculation computed on render
   const wVal = parseFloat(weight);
   const hVal = parseFloat(height);
   const bmi = (wVal > 0 && hVal > 0) ? Math.round((wVal / Math.pow(hVal / 100, 2)) * 10) / 10 : null;
+
+  const handleTabChange = (tab: 'test' | 'history' | 'profile') => {
+    if (isProfileIncomplete && tab !== 'profile') {
+      alert("Please complete your clinical profile before accessing other pages.");
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -178,31 +208,35 @@ const Dashboard: React.FC = () => {
         WebkitOverflowScrolling: 'touch'
       }}>
         <button 
-          onClick={() => setActiveTab('test')}
+          onClick={() => handleTabChange('test')}
           style={{
-            flex: 1, padding: '0.65rem 0.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+            flex: 1, padding: '0.65rem 0.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, transition: 'all 0.2s ease',
             fontSize: '0.85rem',
             background: activeTab === 'test' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
             color: activeTab === 'test' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            opacity: isProfileIncomplete && activeTab !== 'test' ? 0.4 : 1,
+            cursor: isProfileIncomplete && activeTab !== 'test' ? 'not-allowed' : 'pointer',
             whiteSpace: 'nowrap'
           }}
         >
-          New Test
+          New Test {isProfileIncomplete && '🔒'}
         </button>
         <button 
-          onClick={() => setActiveTab('history')}
+          onClick={() => handleTabChange('history')}
           style={{
-            flex: 1, padding: '0.65rem 0.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+            flex: 1, padding: '0.65rem 0.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, transition: 'all 0.2s ease',
             fontSize: '0.85rem',
             background: activeTab === 'history' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
             color: activeTab === 'history' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            opacity: isProfileIncomplete && activeTab !== 'history' ? 0.4 : 1,
+            cursor: isProfileIncomplete && activeTab !== 'history' ? 'not-allowed' : 'pointer',
             whiteSpace: 'nowrap'
           }}
         >
-          History Log
+          History Log {isProfileIncomplete && '🔒'}
         </button>
         <button 
-          onClick={() => setActiveTab('profile')}
+          onClick={() => handleTabChange('profile')}
           style={{
             flex: 1, padding: '0.65rem 0.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
             fontSize: '0.85rem',
@@ -211,7 +245,7 @@ const Dashboard: React.FC = () => {
             whiteSpace: 'nowrap'
           }}
         >
-          Clinical Profile
+          Clinical Profile {isProfileIncomplete && '⚠️'}
         </button>
       </div>
 
@@ -321,8 +355,26 @@ const Dashboard: React.FC = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
             <Settings size={22} color="var(--accent-secondary)" />
-            <h3 style={{ margin: 0 }}>Review &amp; Edit Clinical Questions</h3>
+            <h3 style={{ margin: 0 }}>
+              {isProfileIncomplete ? 'Complete Your Clinical Profile' : 'Review & Edit Clinical Questions'}
+            </h3>
           </div>
+
+          {isProfileIncomplete && (
+            <div style={{
+              padding: '1.25rem',
+              borderRadius: '12px',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              color: 'var(--accent-warning)',
+              marginBottom: '2rem',
+              fontSize: '0.9rem',
+              lineHeight: '1.5'
+            }}>
+              <strong>Clinical Profile Completion Required:</strong><br />
+              Welcome! Since you signed in using Google OAuth, please complete your clinical parameters below. These modifiable predictors are required to calculate your acoustic dementia risk score and cognitive reserve metrics.
+            </div>
+          )}
 
           {profileSuccess && (
             <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', border: '1px solid rgba(16, 185, 129, 0.3)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>

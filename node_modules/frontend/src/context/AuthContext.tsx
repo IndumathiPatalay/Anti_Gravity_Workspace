@@ -3,14 +3,16 @@ import React, { createContext, useContext, useState } from 'react';
 interface User {
   id: number;
   userId: string;
-  age: number;
-  healthStatus: string;
-  educationLevel?: string;
-  phq1?: number;
-  phq2?: number;
-  weight?: number;
-  height?: number;
-  bmi?: number;
+  age?: number | null;
+  healthStatus?: string | null;
+  educationLevel?: string | null;
+  phq1?: number | null;
+  phq2?: number | null;
+  weight?: number | null;
+  height?: number | null;
+  bmi?: number | null;
+  oauthProvider?: string | null;
+  oauthId?: string | null;
 }
 
 interface AuthContextType {
