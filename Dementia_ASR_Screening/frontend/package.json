@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+<<<<<<< HEAD
     "build": "tsc --noEmit && npx vite build",
+=======
+    "build": "tsc --build && npx vite build",
+>>>>>>> 45216866eee1363eba89c206eabb37f7c0970eef
     "lint": "eslint .",
     "preview": "vite preview --host"
   },
