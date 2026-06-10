@@ -1,0 +1,3 @@
+VITE_API_URL=http://localhost:5000
+# Google OAuth Configuration
+VITE_GOOGLE_CLIENT_ID=220128739200-39uncba7qppi2thff7444j7poblqnnqd.apps.googleusercontent.com
